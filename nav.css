@@ -14,10 +14,6 @@
   padding-left: 20px;
 }
 
-#nav .left .mdi {
-  cursor: not-allowed;
-}
-
 #nav .right {
   display: flex;
   column-gap: 30px;
@@ -30,7 +26,7 @@
   background: transparent;
   letter-spacing: 2px;
   font-size: xx-small;
-  font-family: 'Circular Black';
+  font-family: "Circular Black";
   cursor: pointer;
   transition: transform 0.3s ease;
 }
@@ -41,12 +37,16 @@
   color: #181818;
   letter-spacing: 2px;
   font-size: xx-small;
-  font-family: 'Circular Black';
+  font-family: "Circular Black";
   cursor: pointer;
   padding: 12px;
   border-radius: 500px;
   width: 120px;
   transition: transform 0.3s ease;
+}
+
+#nav .left .mdi {
+  cursor: not-allowed;
 }
 
 #nav .right .sign-up-btn:hover {

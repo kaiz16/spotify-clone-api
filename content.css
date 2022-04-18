@@ -26,7 +26,6 @@
   width: 100%;
   margin-top: 20px;
   column-gap: 24px;
-  /* flex-wrap: wrap; */
 }
 
 #content section .card-wrapper .card {
@@ -41,8 +40,8 @@
   row-gap: 15px;
   background-color: #181818;
   cursor: pointer;
-  transition: background-color 0.3s ease;
   text-decoration: none;
+  transition: background-color 0.3s ease;
 }
 
 #content section .card-wrapper .card:hover {
@@ -62,7 +61,7 @@
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: all 0.3s ease;
+  transition: bottom 0.3s ease;
 }
 
 #content section .card-wrapper .card:hover .mdi-play {

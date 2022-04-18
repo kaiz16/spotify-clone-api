@@ -8,7 +8,6 @@
   left: 0;
   top: 0;
   z-index: 10;
- 
 }
 
 #sidebar .banner {
@@ -31,6 +30,10 @@
   line-height: 1.5rem;
 }
 
+#sidebar .menu-item a {
+  text-decoration: none;
+}
+
 #sidebar .menu-item > * {
   color: #b3b3b3;
   transition: all 0.3s ease;
@@ -38,14 +41,6 @@
 
 #sidebar .menu-item:hover > * {
   color: #fff;
-}
-
-#sidebar .menu-item.active > * {
-  color: #fff;
-}
-
-#sidebar .menu-item a {
-  text-decoration: none;
 }
 
 #sidebar .footer {
