@@ -1,6 +1,6 @@
 let TOKEN = ""; // Auth token
 const client_id = "344cdc5aaf1e48d598aedc7bc81c6e3f"; // Your client ID
-const redirect_uri = "http://127.0.0.1:5500"; // Your Redirect URI - Make sure to set this Redirect URI in your Spotify app settings.
+const redirect_uri = window.location; // Your Redirect URI - Make sure to set this Redirect URI in your Spotify app settings.
 const scope = "user-read-private user-read-email user-top-read"; // A space separated scopes.
 function getToken() {
   var url = "https://accounts.spotify.com/authorize";
