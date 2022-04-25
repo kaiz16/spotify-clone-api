@@ -1,6 +1,6 @@
 var TOKEN = ""; // The token. Will be updated later.
 var client_id = "193cfa8e636d4de4854bf6710873ac5c"; // Your client ID
-var redirect_uri = "https://kaiz16.github.io/spotify-clone"; // The deployment URL
+var redirect_uri = "https://kaiz16.github.io/spotify-clone-api"; // The deployment URL
 var scope = "user-read-private user-read-email user-top-read"; // A space separated scopes.
 function authorize() {
   var url = "https://accounts.spotify.com/authorize";
