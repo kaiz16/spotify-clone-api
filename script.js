@@ -157,6 +157,6 @@ window.addEventListener("load", function () {
     fetchNewReleases();
     fetchFeaturedPlaylists();
   } else {
-    getToken();
+    authorize();
   }
 });
