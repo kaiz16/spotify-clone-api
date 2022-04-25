@@ -1,14 +1,13 @@
 var TOKEN = ""; // The token. Will be updated later.
-var client_id = "581c7ad32a9d49aca66b20d3511dd59b"; // Your client ID
-var redirect_uri = window.location; // The current page URL
+var client_id = "193cfa8e636d4de4854bf6710873ac5c"; // Your client ID
+var redirect_uri = window.location.origin; // The current page URL
 var scope = "user-read-private user-read-email user-top-read"; // A space separated scopes.
-function getToken() {
+function authorize() {
   var url = "https://accounts.spotify.com/authorize";
   url += "?response_type=token";
   url += "&client_id=" + encodeURIComponent(client_id);
   url += "&scope=" + encodeURIComponent(scope);
   url += "&redirect_uri=" + encodeURIComponent(redirect_uri);
-  console.log(url);
   window.open(url, "_self");
 }
 
@@ -21,6 +20,21 @@ function extractTokenFromURI() {
     return token;
   }
   return null; // Return null if there's no token
+}
+
+function generateCard(image, title, subtitle, href) {
+  return `
+    <a class="card" href="${href}" target="_blank">
+        <img
+            src="${image}"
+            alt="peaceful piano"
+            srcset=""
+        />
+        <span class="mdi mdi-play mdi-36px"></span>
+        <div class="title">${title}</div>
+        <div class="subtitle">${subtitle}</div>
+    </a>
+    `;
 }
 
 async function fetchUserTopItems() {
@@ -77,21 +91,6 @@ async function fetchFeaturedPlaylists() {
   }
 }
 
-function generateCard(image, title, subtitle, href) {
-  return `
-      <a class="card" href="${href}" target="_blank">
-          <img
-              src="${image}"
-              alt="peaceful piano"
-              srcset=""
-          />
-          <span class="mdi mdi-play mdi-36px"></span>
-          <div class="title">${title}</div>
-          <div class="subtitle">${subtitle}</div>
-      </a>
-      `;
-}
-
 function displayUserTopItems(data) {
   var section = document.querySelector("#your-top-items");
   var sectionTitle = section.querySelector(".title");
@@ -110,6 +109,7 @@ function displayUserTopItems(data) {
     sectionWrapper.innerHTML += generateCard(image, title, subtitle, href);
   }
 }
+
 function displayNewReleases(data) {
   var section = document.querySelector("#new-releases");
   var sectionTitle = section.querySelector(".title");
@@ -128,6 +128,7 @@ function displayNewReleases(data) {
     sectionWrapper.innerHTML += generateCard(image, title, subtitle, href);
   }
 }
+
 function displayFeaturedPlaylists(data) {
   var section = document.querySelector("#featured-playlists");
   var sectionTitle = section.querySelector(".title");
