@@ -98,6 +98,12 @@ function displayUserTopItems(data) {
   var sectionWrapper = section.querySelector(".card-wrapper");
   sectionTitle.textContent = "Your Top Items";
   sectionSubtitle.textContent = "Based on your recent listening";
+  
+  if (!data.items.length) {
+    sectionWrapper.innerHTML = "<h1> Uh oh! Looks like you haven't listened to anything recently. Go listen to some music on <a href='https://open.spotify.com' target='_blank'>Spotify</a> and come back here!</h1>";
+    return;
+  
+  }
   for (let i = 0; i < data.items.length; i++) {
     var track = data.items[i];
 
@@ -117,6 +123,12 @@ function displayNewReleases(data) {
   var sectionWrapper = section.querySelector(".card-wrapper");
   sectionTitle.textContent = "New Releases";
   sectionSubtitle.textContent = "New releases from Spotify";
+
+  if (!data.albums.items.length) {
+    sectionWrapper.innerHTML = "<h1> Uh oh! Looks like there aren't any new releases right now. Try again later!</h1>";
+    return;
+  }
+
   for (let i = 0; i < data.albums.items.length; i++) {
     var track = data.albums.items[i];
 
@@ -136,6 +148,12 @@ function displayFeaturedPlaylists(data) {
   var sectionWrapper = section.querySelector(".card-wrapper");
   sectionTitle.textContent = "Featured Playlists";
   sectionSubtitle.textContent = "Featured playlists from Spotify";
+
+  if (!data.playlists.items.length) {
+    sectionWrapper.innerHTML = "<h1> Uh oh! Looks like there aren't any featured playlists right now. Try again later!</h1>";
+    return;
+  }
+  
   for (let i = 0; i < data.playlists.items.length; i++) {
     var track = data.playlists.items[i];
 
@@ -144,6 +162,8 @@ function displayFeaturedPlaylists(data) {
     var subtitle = track.description;
     var href = track.external_urls.spotify;
 
+    // Escape links in subtitle
+    subtitle = subtitle.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     sectionWrapper.innerHTML += generateCard(image, title, subtitle, href);
   }
 }
