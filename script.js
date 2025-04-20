@@ -1,25 +1,73 @@
 var TOKEN = ""; // The token. Will be updated later.
 var client_id = "0664bb72e5bd453fb77af312c44b8137"; // Your client ID
-var redirect_uri = "https://kaiz16.github.io/spotify-clone-api"; // The deployment URL
+var client_secret = "d8b50548e0994fa3aa5b1f85fb9b499a";
+var redirect_uri = "http://127.0.0.1:5500"; // The deployment URL
 var scope = "user-read-private user-read-email user-top-read"; // A space separated scopes.
 function authorize() {
   var url = "https://accounts.spotify.com/authorize";
-  url += "?response_type=token";
+  url += "?response_type=code";
   url += "&client_id=" + encodeURIComponent(client_id);
   url += "&scope=" + encodeURIComponent(scope);
   url += "&redirect_uri=" + encodeURIComponent(redirect_uri);
   window.open(url, "_self");
 }
 
-function extractTokenFromURI() {
-  var hash = window.location.hash;
-  if (hash && hash.includes("access_token")) {
-    var url = hash.replace("#access_token=", "");
-    var chunks = url.split("&");
-    var token = chunks[0];
-    return token;
+async function extractCodeAndExchangeForToken() {
+  var url = window.location.href;
+  var chunks = url.split("?");
+  var params = chunks[1];
+  var pairs = params?.split("&") || [];
+  for (var i = 0; i < pairs.length; i++) {
+    var pair = pairs[i].split("=");
+    if (pair[0] === "code") {
+      var code = pair[1];
+      const response = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: "Basic " + btoa(client_id + ":" + client_secret),
+        },
+        body: new URLSearchParams({
+          code: code,
+          redirect_uri: redirect_uri,
+          grant_type: "authorization_code",
+        }),
+      });
+      var data = await response.json();
+      return data.access_token;
+    }
   }
+
   return null; // Return null if there's no token
+}
+
+function cleanURL() {
+  window.history.replaceState({}, document.title, window.location.pathname);
+}
+
+function updateBtns() {
+  const signUpBtn = document.querySelector(".sign-up-btn");
+  const loginBtn = document.querySelector(".login-btn");
+  const signOutBtn = document.querySelector(".sign-out-btn");
+  if (TOKEN) {
+    signUpBtn.style.display = "none";
+    loginBtn.style.display = "none";
+    signOutBtn.style.display = "block";
+    signOutBtn.addEventListener("click", () => {
+      window.open("https://accounts.spotify.com/logout", "_blank");
+      cleanURL();
+      window.location.reload();
+    });
+  } else {
+    signUpBtn.style.display = "block";
+    loginBtn.style.display = "block";
+    signOutBtn.style.display = "none";
+    [signUpBtn, loginBtn].forEach((btn) => {
+      btn.addEventListener("click", () => {
+        authorize();
+      });
+    });
+  }
 }
 
 function generateCard(image, title, subtitle, href) {
@@ -98,11 +146,11 @@ function displayUserTopItems(data) {
   var sectionWrapper = section.querySelector(".card-wrapper");
   sectionTitle.textContent = "Your Top Items";
   sectionSubtitle.textContent = "Based on your recent listening";
-  
+
   if (!data.items.length) {
-    sectionWrapper.innerHTML = "<h1> Uh oh! Looks like you haven't listened to anything recently. Go listen to some music on <a href='https://open.spotify.com' target='_blank'>Spotify</a> and come back here!</h1>";
+    sectionWrapper.innerHTML =
+      "<h1> Uh oh! Looks like you haven't listened to anything recently. Go listen to some music on <a href='https://open.spotify.com' target='_blank'>Spotify</a> and come back here!</h1>";
     return;
-  
   }
   for (let i = 0; i < data.items.length; i++) {
     var track = data.items[i];
@@ -125,7 +173,8 @@ function displayNewReleases(data) {
   sectionSubtitle.textContent = "New releases from Spotify";
 
   if (!data.albums.items.length) {
-    sectionWrapper.innerHTML = "<h1> Uh oh! Looks like there aren't any new releases right now. Try again later!</h1>";
+    sectionWrapper.innerHTML =
+      "<h1> Uh oh! Looks like there aren't any new releases right now. Try again later!</h1>";
     return;
   }
 
@@ -150,10 +199,11 @@ function displayFeaturedPlaylists(data) {
   sectionSubtitle.textContent = "Featured playlists from Spotify";
 
   if (!data.playlists.items.length) {
-    sectionWrapper.innerHTML = "<h1> Uh oh! Looks like there aren't any featured playlists right now. Try again later!</h1>";
+    sectionWrapper.innerHTML =
+      "<h1> Uh oh! Looks like there aren't any featured playlists right now. Try again later!</h1>";
     return;
   }
-  
+
   for (let i = 0; i < data.playlists.items.length; i++) {
     var track = data.playlists.items[i];
 
@@ -168,15 +218,16 @@ function displayFeaturedPlaylists(data) {
   }
 }
 
-window.addEventListener("load", function () {
-  TOKEN = extractTokenFromURI();
+window.addEventListener("load", async () => {
+  TOKEN = await extractCodeAndExchangeForToken();
+  updateBtns();
   if (TOKEN) {
     console.log("Token", TOKEN);
     // fetch the endpoints
     fetchUserTopItems();
     fetchNewReleases();
-    fetchFeaturedPlaylists();
+    // fetchFeaturedPlaylists(); // Deprecated from Spotify API
   } else {
-    authorize();
+    authorize(); // Redirect to Spotify login page
   }
 });

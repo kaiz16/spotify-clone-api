@@ -45,6 +45,16 @@
   transition: transform 0.3s ease;
 }
 
+#nav .right .sign-out-btn {
+  border: none;
+  background: transparent;
+  letter-spacing: 2px;
+  font-size: xx-small;
+  font-family: "Circular Black";
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
 #nav .left .mdi {
   cursor: not-allowed;
 }
