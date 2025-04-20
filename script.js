@@ -1,44 +1,122 @@
-var TOKEN = ""; // The token. Will be updated later.
-var client_id = "0664bb72e5bd453fb77af312c44b8137"; // Your client ID
-var client_secret = "d8b50548e0994fa3aa5b1f85fb9b499a";
-var redirect_uri = "http://127.0.0.1:5500"; // The deployment URL
-var scope = "user-read-private user-read-email user-top-read"; // A space separated scopes.
-function authorize() {
-  var url = "https://accounts.spotify.com/authorize";
-  url += "?response_type=code";
-  url += "&client_id=" + encodeURIComponent(client_id);
-  url += "&scope=" + encodeURIComponent(scope);
-  url += "&redirect_uri=" + encodeURIComponent(redirect_uri);
-  window.open(url, "_self");
+const METADATA = {
+  namespace: "spotify-clone",
+  clientID: "0664bb72e5bd453fb77af312c44b8137",
+  redirectURI: "https://kaiz16.github.io/spotify-clone-api",
+  scope: "user-read-private user-read-email user-top-read",
+};
+
+function getLocalToken() {
+  const token = sessionStorage.getItem(`${METADATA.namespace}_access_token`);
+  return token;
 }
 
-async function extractCodeAndExchangeForToken() {
-  var url = window.location.href;
-  var chunks = url.split("?");
-  var params = chunks[1];
-  var pairs = params?.split("&") || [];
-  for (var i = 0; i < pairs.length; i++) {
-    var pair = pairs[i].split("=");
-    if (pair[0] === "code") {
-      var code = pair[1];
-      const response = await fetch("https://accounts.spotify.com/api/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: "Basic " + btoa(client_id + ":" + client_secret),
-        },
-        body: new URLSearchParams({
-          code: code,
-          redirect_uri: redirect_uri,
-          grant_type: "authorization_code",
-        }),
-      });
-      var data = await response.json();
-      return data.access_token;
-    }
-  }
+function setLocalToken(token) {
+  sessionStorage.setItem(`${METADATA.namespace}_access_token`, token);
+}
 
-  return null; // Return null if there's no token
+function deleteLocalToken() {
+  sessionStorage.removeItem(`${METADATA.namespace}_access_token`);
+}
+
+function getLocalCodeVerifier() {
+  const codeVerifier = sessionStorage.getItem(
+    `${METADATA.namespace}_code_verifier`
+  );
+  return codeVerifier;
+}
+
+function setLocalCodeVerifier(codeVerifier) {
+  sessionStorage.setItem(`${METADATA.namespace}_code_verifier`, codeVerifier);
+}
+
+function deleteLocalCodeVerifier() {
+  sessionStorage.removeItem(`${METADATA.namespace}_code_verifier`);
+}
+
+function generateRandomString(length) {
+  const possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const values = crypto.getRandomValues(new Uint8Array(length));
+  return values.reduce((acc, x) => acc + possible[x % possible.length], "");
+}
+
+function sha256(plain) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(plain);
+  return crypto.subtle.digest("SHA-256", data);
+}
+
+function base64encode(input) {
+  return btoa(String.fromCharCode(...new Uint8Array(input)))
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+}
+
+async function authorize() {
+  const authUrl = new URL("https://accounts.spotify.com/authorize");
+  const codeVerifier = generateRandomString(64);
+  const hashed = await sha256(codeVerifier);
+  const codeChallenge = base64encode(hashed);
+
+  setLocalCodeVerifier(codeVerifier);
+
+  const params = {
+    response_type: "code",
+    client_id: METADATA.clientID,
+    scope: METADATA.scope,
+    redirect_uri: METADATA.redirectURI,
+    code_challenge_method: "S256",
+    code_challenge: codeChallenge,
+  };
+
+  authUrl.search = new URLSearchParams(params).toString();
+  window.location.href = authUrl.toString();
+}
+
+function extractCodeFromURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  let code = urlParams.get("code");
+  return code;
+}
+
+async function getProfile() {
+  const token = getLocalToken();
+  if (!token) return null;
+
+  const response = await fetch("https://api.spotify.com/v1/me", {
+    headers: {
+      Authorization: "Bearer " + token,
+    },
+  });
+
+  const data = await response.json();
+  return data;
+}
+
+async function getToken(code) {
+  const codeVerifier = getLocalCodeVerifier();
+
+  const url = "https://accounts.spotify.com/api/token";
+  const payload = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      client_id: METADATA.clientID,
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: METADATA.redirectURI,
+      code_verifier: codeVerifier,
+    }),
+  };
+
+  const body = await fetch(url, payload);
+  const response = await body.json();
+
+  setLocalToken(response.access_token);
+  return response.access_token;
 }
 
 function cleanURL() {
@@ -49,13 +127,13 @@ function updateBtns() {
   const signUpBtn = document.querySelector(".sign-up-btn");
   const loginBtn = document.querySelector(".login-btn");
   const signOutBtn = document.querySelector(".sign-out-btn");
-  if (TOKEN) {
+  if (getLocalToken()) {
     signUpBtn.style.display = "none";
     loginBtn.style.display = "none";
     signOutBtn.style.display = "block";
     signOutBtn.addEventListener("click", () => {
-      window.open("https://accounts.spotify.com/logout", "_blank");
-      cleanURL();
+      deleteLocalToken();
+      deleteLocalCodeVerifier();
       window.location.reload();
     });
   } else {
@@ -91,7 +169,7 @@ async function fetchUserTopItems() {
     var response = await fetch(endpoint + "?limit=6", {
       method: "GET",
       headers: {
-        Authorization: "Bearer " + TOKEN,
+        Authorization: `Bearer ${getLocalToken()}`,
       },
     });
     var data = await response.json();
@@ -109,7 +187,7 @@ async function fetchNewReleases() {
     var response = await fetch(endpoint + "?limit=6", {
       method: "GET",
       headers: {
-        Authorization: "Bearer " + TOKEN,
+        Authorization: `Bearer ${getLocalToken()}`,
       },
     });
     var data = await response.json();
@@ -127,7 +205,7 @@ async function fetchFeaturedPlaylists() {
     var response = await fetch(endpoint + "?limit=6", {
       method: "GET",
       headers: {
-        Authorization: "Bearer " + TOKEN,
+        Authorization: `Bearer ${getLocalToken()}`,
       },
     });
     var data = await response.json();
@@ -219,15 +297,19 @@ function displayFeaturedPlaylists(data) {
 }
 
 window.addEventListener("load", async () => {
-  TOKEN = await extractCodeAndExchangeForToken();
-  updateBtns();
-  if (TOKEN) {
-    console.log("Token", TOKEN);
-    // fetch the endpoints
-    fetchUserTopItems();
-    fetchNewReleases();
-    // fetchFeaturedPlaylists(); // Deprecated from Spotify API
-  } else {
-    authorize(); // Redirect to Spotify login page
+  const profile = await getProfile();
+  const code = extractCodeFromURL();
+  if (!profile && !code) {
+    authorize();
+    // return updateBtns();
   }
+
+  if (code) {
+    await getToken(code);
+  }
+
+  updateBtns();
+  cleanURL();
+  fetchUserTopItems();
+  fetchNewReleases();
 });
