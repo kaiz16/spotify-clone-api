@@ -1,7 +1,7 @@
 const METADATA = {
   namespace: "spotify-clone",
   clientID: "0664bb72e5bd453fb77af312c44b8137",
-  redirectURI: "https://kaiz16.github.io/spotify-clone-api",
+  redirectURI: "https://kaiz.me/spotify-clone-api",
   scope: "user-read-private user-read-email user-top-read",
 };
 
